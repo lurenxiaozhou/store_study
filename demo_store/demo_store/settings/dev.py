@@ -20,6 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # sys.path保存了Python解释器的导报路径
 sys.path.insert(0,os.path.join(BASE_DIR,'apps'))
+# print(sys.path)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
@@ -43,7 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'demo_store.apps.users.apps.UsersConfig'
+    'users.apps.UsersConfig'
 ]
 
 MIDDLEWARE = [
