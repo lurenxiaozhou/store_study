@@ -31,7 +31,7 @@ SECRET_KEY = '8k$74ml-)^m@s1-lpq=qfs(1^6c4ux1s1vq4sm)fo_l$okfe^f'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['api.meiduo.site', '127.0.0.1', 'localhost', 'www.meiduo.site']
 
 
 # Application definition
@@ -206,3 +206,4 @@ REST_FRAMEWORK = {
 }
 
 AUTH_USER_MODEL = 'users.User'
+
