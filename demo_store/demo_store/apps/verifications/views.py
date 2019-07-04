@@ -11,6 +11,7 @@ from rest_framework import status
 from celery_tasks.sms.tasks import send_sms_code
 
 from demo_store.libs.captcha.captcha import captcha
+from users.models import User
 from .serializers import ImageCodeCheckSerializers
 from . import constants,serializers
 from demo_store.utils.yuntongxun.sms import CCP
@@ -18,6 +19,32 @@ from demo_store.utils.yuntongxun.sms import CCP
 
 
 logger = logging.getLogger('django')
+
+
+class MobileCountView(APIView):
+    # 获取指定手机号数量
+    def get(self,request, mobile):
+        count = User.objects.filter(mobile=mobile).count()
+
+        data={
+            'mobile':mobile,
+            'count':count
+        }
+
+        return Response(data)
+
+
+class UsernameCountView(APIView):
+    # 获取指定用户
+    def get(self,request,username):
+        count = User.objects.filter(username=username).count()
+
+        data={
+            'username':username,
+            'count':count
+        }
+
+        return Response(data)
 
 
 class SMSCodeView(GenericAPIView):
@@ -39,6 +66,7 @@ class SMSCodeView(GenericAPIView):
         # redis 管道
         pl = redis_conn.pipeline()
         pl.setex("sms_%s"%mobile,constants.SMS_CODE_REDIS_EXPIRES,sms_code)
+        print(sms_code)
         pl.setex("send_flag_%s"%mobile,constants.SEND_SMS_CODE_INTERVAL,1)
 
         # 管道执行
@@ -61,14 +89,10 @@ class SMSCodeView(GenericAPIView):
         #         logger.info("发送短信验证码短信[失败][mobile:%s]" % mobile)
         #         return Response({"message":"failed"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         # 使用celery发送短信
-        expires = constants.SMS_CODE_REDIS_EXPIRES // 60
-        send_sms_code.delay(mobile,sms_code,expires,constants.SMS_CODE_TEMP_ID)
+        # expires = constants.SMS_CODE_REDIS_EXPIRES // 60
+        # send_sms_code.delay(mobile,sms_code,expires,constants.SMS_CODE_TEMP_ID)
 
         return Response({'message':'OK'})
-
-
-
-
 
 
 class ImageCodeView(APIView):

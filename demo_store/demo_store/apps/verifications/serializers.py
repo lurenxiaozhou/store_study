@@ -23,7 +23,7 @@ class ImageCodeCheckSerializers(serializers.Serializer):
 
         # 比较图片验证码
         real_image_code_text = real_image_code_text.decode()
-        
+
         if real_image_code_text.lower() != text.lower():
             raise serializers.ValidationError('图片验证码错误')
 
