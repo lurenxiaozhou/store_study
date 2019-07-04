@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from django_redis import get_redis_connection
 from django.http import HttpResponse
 from rest_framework import status
+from celery_tasks.sms.tasks import send_sms_code
 
 from demo_store.libs.captcha.captcha import captcha
 from .serializers import ImageCodeCheckSerializers
@@ -43,21 +44,27 @@ class SMSCodeView(GenericAPIView):
         # 管道执行
         pl.execute()
 
-        # 发送短信
-        try:
-            ccp=CCP()
-            expires = constants.SMS_CODE_REDIS_EXPIRES // 60
-            result=ccp.send_template_sms(mobile,[sms_code,expires],constants.SMS_CODE_TEMP_ID)
-        except Exception as e:
-            logger.error("发送短信验证码短信[异常][mobile:%s,message:%s]"%(mobile,e))
-            return Response({"message":"failed"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        else:
-            if result == 0:
-                logger.info("发送短信验证码短信[正常][mobile:%s]"%mobile)
-                return Response({"message":"OK"})
-            else:
-                logger.info("发送短信验证码短信[失败][mobile:%s]" % mobile)
-                return Response({"message":"failed"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # # 发送短信
+
+        # try:
+        #     ccp=CCP()
+        #     expires = constants.SMS_CODE_REDIS_EXPIRES // 60
+        #     result=ccp.send_template_sms(mobile,[sms_code,expires],constants.SMS_CODE_TEMP_ID)
+        # except Exception as e:
+        #     logger.error("发送短信验证码短信[异常][mobile:%s,message:%s]"%(mobile,e))
+        #     return Response({"message":"failed"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # else:
+        #     if result == 0:
+        #         logger.info("发送短信验证码短信[正常][mobile:%s]"%mobile)
+        #         return Response({"message":"OK"})
+        #     else:
+        #         logger.info("发送短信验证码短信[失败][mobile:%s]" % mobile)
+        #         return Response({"message":"failed"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # 使用celery发送短信
+        expires = constants.SMS_CODE_REDIS_EXPIRES // 60
+        send_sms_code.delay(mobile,sms_code,expires,constants.SMS_CODE_TEMP_ID)
+
+        return Response({'message':'OK'})
 
 
 
