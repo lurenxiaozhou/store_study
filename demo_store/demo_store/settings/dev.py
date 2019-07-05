@@ -48,7 +48,8 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'users.apps.UsersConfig',
-    'verifications.apps.VerificationsConfig'
+    'verifications.apps.VerificationsConfig',
+    'oauth.apps.OauthConfig'
 ]
 
 MIDDLEWARE = [
@@ -217,6 +218,7 @@ REST_FRAMEWORK = {
 
 JWT_AUTH = {
     'JWT_EXPIRATION_DELTA': datetime.timedelta(days=1), # 有效期
+    'JWT_RESPONSE_PAYLOAD_HANDLER': 'users.utils.jwt_response_payload_handler',
 }
 
 AUTH_USER_MODEL = 'users.User'
@@ -230,4 +232,7 @@ CORS_ORIGIN_WHITELIST = (
 )
 CORS_ALLOW_CREDENTIALS = True  # 允许携带cookie
 
-
+# 自定义后端认证
+AUTHENTICATION_BACKENDS = [
+    'users.utils.UsernameMobileAuthBackend',
+]
