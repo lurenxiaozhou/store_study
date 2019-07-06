@@ -1,0 +1,2 @@
+class OAuthQQAPIError(BaseException):
+    pass
