@@ -55,7 +55,7 @@ class OAuthQQUserSerializer(serializers.ModelSerializer):
         except User.DoesNotExist:
             pass
         else:
-            
+
             password = attrs['password']
             if not user.check_password(password):
                 raise serializers.ValidationError("密码错误")
