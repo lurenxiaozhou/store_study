@@ -1,5 +1,7 @@
 from django.shortcuts import render
 from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework_extensions.cache.mixins import CacheResponseMixin
+
 from . import serializers
 
 from .models import Area
@@ -7,7 +9,8 @@ from .models import Area
 
 
 
-class AreasViewSet(ReadOnlyModelViewSet):
+class AreasViewSet(CacheResponseMixin,ReadOnlyModelViewSet):
+    pagination_class = None
 
     def get_queryset(self):
         if self.action == 'list':
