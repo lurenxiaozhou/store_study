@@ -29,6 +29,7 @@ class QQAuthURLView(APIView):
 class QQAuthUserView(CreateAPIView):
     """qq登录的用户"""
     serializer_class = OAuthQQUserSerializer
+
     def get(self,request):
         """1.获取coed
         2.凭借code 获取access_token
@@ -85,6 +86,7 @@ class QQAuthUserView(CreateAPIView):
     #     :param requset:
     #     :return:
     #     """
+
 
 
 

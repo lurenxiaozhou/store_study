@@ -63,7 +63,7 @@
                     <a @click="show_add">新增收货地址</a>
                     <span>您已创建了<b>{{addresses.length}}</b>个收货地址，最多可创建<b>{{ limit }}</b>个</span>
                 </div>
-                <div class="site_con" v-for="(address, index) in addresses">
+                <div class="site_con" v-for="(address, index,addresses) in addresses">
                     <div class="site_title">
                         <div v-if="is_set_title[index]">
                             <input v-model="input_title" type="text" name="">
