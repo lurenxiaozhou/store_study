@@ -122,3 +122,37 @@ class EmailSerializer(serializers.ModelSerializer):
         send_active_email.delay(email,url)
 
         return instance
+
+
+class AddPWSerializer(serializers.ModelSerializer):
+    password2 = serializers.CharField(label='确认密码', write_only=True)
+    password1 = serializers.CharField(label='确认密码', write_only=True)
+
+    class Meta:
+        model = User
+        fields =['password','password2','password1']
+        extra_kwargs = {
+            'password': {
+                'write_only': True,
+                'min_length': 8,
+                'max_length': 20,
+                'error_messages': {
+                    'min_length': '只允许8-20个字符的密码',
+                    'max_length': '只允许8-20个字符的密码'
+                }
+            }
+        }
+
+    def validate_password(self, value):
+        self.password = value
+    def validate(self,data):
+        # 判断密码是否正确
+        if data['password'] != self.password:
+            raise serializers.ValidationError('密码错误')
+
+        # 判断两次密码
+        if data['password1'] != data['password2']:
+            raise serializers.ValidationError('两次密码不一样')
+
+
+        return data

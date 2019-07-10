@@ -60,7 +60,8 @@ class VerifyEmailView(APIView):
 
 
 
-
+class AddPassWordView(CreateAPIView):
+    serializer_class=serializers.AddPWSerializer
 
 
 

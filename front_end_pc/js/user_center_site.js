@@ -41,23 +41,7 @@ var vm = new Vue({
                 alert(error.response.data);
             });
 
-        // axios.get(this.host + '/addresses/', {
-        //         responseType: 'json'
-        //     })
-        //     .then(response => {
-        //         // 加载用户数据
-        //             this.receiver = response.data.addresses.user;
-        //             this.province = response.data.addresses.province_id;
-        //             this.city = response.data.addresse.city_ids;
-        //             this.district = response.data.addresses.district_id;
-        //             this.place = response.data.mobile;
-        //             this.mobile = response.data.email;
-        //             this.tel = response.data.email_active;
-        //             this.email = response.data.email_active;
-        //     })
-        //     .catch(error => {
-        //         alert(error.response.data);
-        //     });
+
 
         axios.get(this.host + '/addresses/', {
                 headers: {
