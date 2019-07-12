@@ -1,15 +1,15 @@
 from django.shortcuts import render
-from rest_framework import status
+from rest_framework import status, mixins
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import User
 from . import serializers
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.generics import CreateAPIView,RetrieveAPIView,UpdateAPIView
+from rest_framework.generics import CreateAPIView, RetrieveAPIView, UpdateAPIView, GenericAPIView
 
 # Create your views here.
-from .serializers import CreateUserSerializer
+from .serializers import CreateUserSerializer, AddUserBrowsingHistorySerializer
 
 
 class UserView(CreateAPIView):
@@ -64,7 +64,18 @@ class AddPassWordView(CreateAPIView):
     serializer_class=serializers.AddPWSerializer
 
 
+class UserBrowsingHistoryView(mixins.CreateModelMixin, GenericAPIView):
+    """
+    用户浏览历史记录
+    """
+    serializer_class = AddUserBrowsingHistorySerializer
+    permission_classes = [IsAuthenticated]
 
+    def post(self, request):
+        """
+        保存
+        """
+        return self.create(request)
 
 
 
