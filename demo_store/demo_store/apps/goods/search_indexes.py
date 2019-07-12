@@ -10,7 +10,7 @@ class SKUIndex(indexes.SearchIndex,indexes.Indexable):
     text = indexes.CharField(document=True,use_template=True)
     id = indexes.IntegerField(model_attr='id')
     name = indexes.CharField(model_attr='name')
-    price = indexes.CharField(model_attr='price')
+    price = indexes.DecimalField(model_attr='price')
     default_image_url = indexes.CharField(model_attr='default_image_url')
     comments = indexes.IntegerField(model_attr='comments')
 
