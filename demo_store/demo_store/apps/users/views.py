@@ -1,10 +1,13 @@
 from django.shortcuts import render
+from django_redis import get_redis_connection
 from rest_framework import status, mixins
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from goods.models import SKU
+from goods.serializers import SKUSerializer
 from .models import User
-from . import serializers
+from . import serializers,constants
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import CreateAPIView, RetrieveAPIView, UpdateAPIView, GenericAPIView
 
@@ -77,7 +80,17 @@ class UserBrowsingHistoryView(mixins.CreateModelMixin, GenericAPIView):
         """
         return self.create(request)
 
+    def get(self,request):
+        # 获取
+        user_id = request.user.id
 
+        redis_conn = get_redis_connection('history')
+        history =redis_conn.lrange('history_%s'%user_id,0,constants.USER_BROWSING_HISTORY_COUNTS_LIMIT)
+        skus=[]
+        for sku_id in history:
+            sku = SKU.objects.get(id=sku_id)
+            skus.append(sku)
 
+        s = SKUSerializer(skus,many=True)
 
-
+        return Response(s.data)
