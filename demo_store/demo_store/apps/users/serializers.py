@@ -145,16 +145,15 @@ class AddPWSerializer(serializers.ModelSerializer):
         }
 
     def validate_password(self, value):
-        self.password = value
-    def validate(self,data):
         # 判断密码是否正确
-        if data['password'] != self.password:
-            raise serializers.ValidationError('密码错误')
+        self.check_password(value)
+
+    def validate(self,data):
+
 
         # 判断两次密码
         if data['password1'] != data['password2']:
             raise serializers.ValidationError('两次密码不一样')
-
 
         return data
 
