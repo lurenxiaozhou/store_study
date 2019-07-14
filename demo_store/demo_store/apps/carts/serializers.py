@@ -3,7 +3,7 @@ from rest_framework import serializers
 from goods.models import SKU
 
 
-class CartSerializer(serializers.ModelSerializer):
+class CartSerializer(serializers.Serializer):
     """
     购物车数据序列化器
     """

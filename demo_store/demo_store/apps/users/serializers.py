@@ -126,12 +126,12 @@ class EmailSerializer(serializers.ModelSerializer):
 
 
 class AddPWSerializer(serializers.ModelSerializer):
+    password1 = serializers.CharField(label='新密码', write_only=True)
     password2 = serializers.CharField(label='确认密码', write_only=True)
-    password1 = serializers.CharField(label='确认密码', write_only=True)
 
     class Meta:
         model = User
-        fields =['password','password2','password1']
+        fields =("username",'password','password1','password2')
         extra_kwargs = {
             'password': {
                 'write_only': True,
@@ -144,12 +144,7 @@ class AddPWSerializer(serializers.ModelSerializer):
             }
         }
 
-    def validate_password(self, value):
-        # 判断密码是否正确
-        self.check_password(value)
-
     def validate(self,data):
-
 
         # 判断两次密码
         if data['password1'] != data['password2']:
@@ -157,6 +152,32 @@ class AddPWSerializer(serializers.ModelSerializer):
 
         return data
 
+    def update(self, instance, validated_data):
+
+        # 判断密码是否正确
+        # user = User.objects.get(username=validated_data['username'])
+        # user.check_password(validated_data['password'])
+        # validated_data['password']=validated_data['password1']
+        # 重写保存方法，增加密码加密
+
+        # 移除数据库模型类中不存在的属性
+        del validated_data['password2']
+        del validated_data['password1']
+        instance.password = validated_data.get('password', instance.password)
+        # user = super().create(validated_data)
+
+        # user.set_password(validated_data['password'])
+        # user.save()
+
+        # 签发ｊｗｔ　token
+        # jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+        # jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+        #
+        # payload = jwt_payload_handler(user)
+        # token = jwt_encode_handler(payload)
+        # user.token = token
+
+        return user
 
 class AddUserBrowsingHistorySerializer(serializers.Serializer):
     """
