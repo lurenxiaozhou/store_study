@@ -234,16 +234,63 @@ class CartView(GenericAPIView):
             return response
 
 
+class CartSelectAllView(GenericAPIView):
+    """购物车全选"""
+    serializer_class = serializers.CartSelectAllSerializer
 
+    def perform_authentication(self, request):
+        # 关闭权限验证
+        pass
 
+    def put(self,request):
+        # 校验
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        selected = serializer.validated_data['selected']
 
+        # 判断用户的登录状态
+        try:
+            user = request.user
+        except Exception:
+            user = None
 
+        # 删除
+        if user and user.is_authenticated:
+            # 已登录
+            redis_conn = get_redis_connection('cart')
+            redis_cart=redis_conn.hgetall('cart_%s'%user.id)
 
+            sku_id_list = redis_cart.keys()
+            if selected:
+                # 全选 ，所有的sku_id都添加到redis set
+                redis_conn.sadd('cart_selected_%s'%user.id,*sku_id_list)
+            else:
+                # 全取消，清空redis的数据
+                redis_conn.srem('cart_selected_%s'%user.id,*sku_id_list)
+            return Response({'message':'OK'})
+        else:
+            # 未登录 cookie
+            cookie_cart = request.COOKIES.get('cart')
 
+            if cookie_cart:
+                # 表示cookie中有购物车数据
+                # 解析
+                cart_dict = pickle.loads(base64.b64decode(cookie_cart.encode()))
+            else:
+                # 表示cookie中没有购物车数据
+                cart_dict = {}
 
+            respones = Response({'message':'OK'})
 
+            if cart_dict:
+                for count_selected_dict in cart_dict.values():
+                    count_selected_dict['selected'] = selected
+                cart_cookie = base64.b64encode(pickle.dumps(cart_dict)).decode()
 
+                # 设置cookie
+                respones.set_cookie('cart',cart_cookie,constants.CART_COOKIE_EXPIRES)
 
+            return respones
 
 
 
