@@ -22,7 +22,7 @@ def exception_handler(exc, context):
         view = context['view']
         if isinstance(exc, DatabaseError) or isinstance(exc, RedisError):
             # 数据库异常
-            logger.error('[%s] %s' % (view, exc))
+            logger.error('[%s] %s' % (view, exc)) #写入到文件
             response = Response({'message': '服务器内部错误'}, status=status.HTTP_507_INSUFFICIENT_STORAGE)
 
     return response
