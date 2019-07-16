@@ -45,6 +45,6 @@ class OrderSettlementView(APIView):
         # 序列返回
         serializer = serializers.OrderSettlementSerializer({'freight':freight,'skus':sku_obj_list})
         return Response(serializer.data)
-        
+
 
 
