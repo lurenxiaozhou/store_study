@@ -11,6 +11,7 @@ from .serializers import OAuthQQUserSerializer
 from .models import OAuthQQUser
 from .exceptions import OAuthQQAPIError
 from .utils import OAuthQQ
+from carts.utils import merge_cart_cookie_to_redis
 
 
 class QQAuthURLView(APIView):
@@ -69,12 +70,21 @@ class QQAuthUserView(CreateAPIView):
             payload = jwt_payload_handler(user)
             token = jwt_encode_payload(payload)
 
-            return Response({
+            # return Response({
+            #     "username":user.username,
+            #     "user_id":user.id,
+            #     "token":token
+            # })
+            response = Response({
                 "username":user.username,
                 "user_id":user.id,
                 "token":token
             })
 
+            # 合并购物车
+            response = merge_cart_cookie_to_redis(request,user,response)
+
+            return response
     # def post(self,requset):
     #     """
     #     1.获取数据
@@ -86,10 +96,13 @@ class QQAuthUserView(CreateAPIView):
     #     :param requset:
     #     :return:
     #     """
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
 
+        # 合并购物车
+        user = self.user
+        response = merge_cart_cookie_to_redis(request,user,response)
 
-
-
-
+        return response
 
 

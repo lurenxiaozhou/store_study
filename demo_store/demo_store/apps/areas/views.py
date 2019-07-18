@@ -75,7 +75,7 @@ class AddressViewSet(mixins.CreateModelMixin,mixins.UpdateModelMixin,GenericView
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(methods=['put'],detail=True)
-    def status(self,request):
+    def status(self,request,pk=None):
         # 设置默认地址
 
         address = self.get_object()
