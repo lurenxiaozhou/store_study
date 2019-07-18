@@ -44,7 +44,6 @@ class SaveOrderSerializer(serializers.ModelSerializer):
                 'required':True
             }
 
-
         }
 
     def create(self, validated_data):
@@ -149,7 +148,7 @@ class SaveOrderSerializer(serializers.ModelSerializer):
                 order.total_amount += order.freight
                 order.save()
 
-            except ValidationError:
+            except serializers.ValidationError:
                 raise
             except Exception as e:
                 logger.error(e)

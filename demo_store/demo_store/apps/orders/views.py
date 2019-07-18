@@ -50,8 +50,9 @@ class OrderSettlementView(APIView):
 
 class SaveOrderView(CreateAPIView):
     """保存订单"""
-    serializer_class =serializers.SaveOrderSerializer
     permission_classes = [IsAuthenticated]
+    serializer_class =serializers.SaveOrderSerializer
+
 
 
 
