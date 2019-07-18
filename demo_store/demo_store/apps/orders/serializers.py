@@ -75,95 +75,107 @@ class SaveOrderSerializer(serializers.ModelSerializer):
         # 创建事物 开启一个事物
         # 生成订单
         with transaction.atomic():
-            # 创建一个保存点
-            save_id = transaction.savepoint()
-
             try:
-                # 创建订单信息
+                # 创建保存点
+                save_id = transaction.savepoint()
+
+                # 保存订单
+                # 生成订单编号order_id
+                # 20180702150101  9位用户id
+                # datetime -> str   strftime
+                #  str -> datetime  strptime
+                order_id = timezone.now().strftime('%Y%m%d%H%M%S') + ('%09d' % user.id)
+
+                # 创建订单基本信息表记录 OrderInfo
                 order = OrderInfo.objects.create(
                     order_id=order_id,
                     user=user,
                     address=address,
                     total_count=0,
-                    total_amount=Decimal(0),
-                    freight=Decimal(10),
+                    total_amount=Decimal('0'),
+                    freight=Decimal('10.00'),
                     pay_method=pay_method,
                     status=OrderInfo.ORDER_STATUS_ENUM['UNSEND'] if pay_method == OrderInfo.PAY_METHODS_ENUM[
                         'CASH'] else OrderInfo.ORDER_STATUS_ENUM['UNPAID']
                 )
-                # 获取购物车信息
-                redis_conn = get_redis_connection("cart")
-                redis_cart = redis_conn.hgetall("cart_%s" % user.id)
-                cart_selected = redis_conn.smembers('cart_selected_%s' % user.id)
 
-                # 将bytes类型转换为int类型
-                cart = {}
-                for sku_id in cart_selected:
-                    cart[int(sku_id)] = int(redis_cart[sku_id])
+                # 查询商品数据库，获取商品数据（库存）
+                sku_id_list = cart.keys()
+                # sku_obj_list = SKU.objects.filter(id__in=sku_id_list)
 
-                # 一次查询出所有商品数据
-                skus = SKU.objects.filter(id__in=cart.keys())
+                # 遍历需要结算的商品数据
+                for sku_id in sku_id_list:
 
-                # 处理订单商品
-                for sku in skus:
-                    sku_count = cart[sku.id]
+                    while True:
+                        # 查询商品的最新库存信息
+                        sku = SKU.objects.get(id=sku_id)
 
-                    # 判断库存
-                    origin_stock = sku.stock  # 原始库存
-                    origin_sales = sku.sales  # 原始销量
+                        # 用户需要购买的数量
+                        sku_count = cart[sku.id]
+                        origin_stock = sku.stock
+                        origin_sales = sku.sales
 
-                    if sku_count > origin_stock:
-                        transaction.savepoint_rollback(save_id)
-                        raise serializers.ValidationError('商品库存不足')
+                        # 判断库存
+                        if origin_stock < sku_count:
+                            # 回滚到保存点
+                            transaction.savepoint_rollback(save_id)
+                            raise serializers.ValidationError('商品%s库存不足' % sku.name)
 
-                    # 用于演示并发下单
-                    # import time
-                    # time.sleep(5)
+                        # import time
+                        # time.sleep(5)
 
-                    # 减少库存
-                    new_stock = origin_stock - sku_count
-                    new_sales = origin_sales + sku_count
+                        # 库存减少 销量增加
+                        # sku.stock -= sku_count
+                        # sku.sales += sku_count
+                        # sku.save()
+                        new_stock = origin_stock - sku_count
+                        new_sales = origin_sales + sku_count
 
-                    sku.stock = new_stock
-                    sku.sales = new_sales
-                    sku.save()
+                        # update返回受影响的行数
+                        result = SKU.objects.filter(id=sku.id, stock=origin_stock).update(stock=new_stock,
+                                                                                          sales=new_sales)
 
-                    # 累计商品的SPU 销量信息
-                    sku.goods.sales += sku_count
-                    sku.goods.save()
+                        if result == 0:
+                            # 表示更新失败，有人抢了商品
+                            # 结束本次while循环，进行下一次while循环
+                            continue
 
-                    # 累计订单基本信息的数据
-                    order.total_count += sku_count  # 累计总金额
-                    order.total_amount += (sku.price * sku_count)  # 累计总额
+                        order.total_count += sku_count
+                        order.total_amount += (sku.price * sku_count)
 
-                    # 保存订单商品
-                    OrderGoods.objects.create(
-                        order=order,
-                        sku=sku,
-                        count=sku_count,
-                        price=sku.price,
-                    )
+                        # 创建订单商品信息表记录 OrderGoods
+                        OrderGoods.objects.create(
+                            order=order,
+                            sku=sku,
+                            count=sku_count,
+                            price=sku.price,
+                        )
+                        # 跳出while循环，进行for循环
+                        break
 
-                # 更新订单的金额数量信息
-                order.total_amount += order.freight
                 order.save()
-
             except serializers.ValidationError:
                 raise
             except Exception as e:
                 logger.error(e)
                 transaction.savepoint_rollback(save_id)
                 raise
+            else:
+                transaction.savepoint_commit(save_id)
 
-            # 提交事务
-            transaction.savepoint_commit(save_id)
+        # 删除购物车中已结算的商品
+        pl = redis_conn.pipeline()
 
-            # 更新redis中保存的购物车数据
-            pl = redis_conn.pipeline()
-            pl.hdel('cart_%s' % user.id, *cart_selected)
-            pl.srem('cart_selected_%s' % user.id, *cart_selected)
-            pl.execute()
-            return order
+        # hash
+        pl.hdel('cart_%s' % user.id, *redis_cart_selected)
+
+        # set
+        pl.srem('cart_selected_%s' % user.id, *redis_cart_selected)
+
+        pl.execute()
+
+        # 返回OrderInfo对象
+        return order
 
 
 
